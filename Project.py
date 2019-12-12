@@ -11,6 +11,7 @@ from matplotlib.ticker import AutoMinorLocator
 
 #plt.style.use('classic')
 #https://datahub.io/cryptocurrency/bitcoin#data-cli
+#https://datahub.io/cryptocurrency/bitcoin#python
 #%% [markdown]
 import os
 dirpath = os.getcwd() 
@@ -19,61 +20,6 @@ import xlrd
 #read the data
 fp = os.path.join( dirpath, 'bitcoin_csv.csv')
 btc = pd.read_csv(fp)
-
-# fpp = os.path.join( dirpath, 'B.csv')
-# Lbb = pd.read_csv(fpp)
-# l = []
-# for i in range(0,len(Lbb)):
-#     l.append(datetime.fromtimestamp(Lbb['Timestamp'][i]))
-#     Lbb['date'] = l
-    
-#%%
-bb = Lbb.dropna()
-bb.head()
-#plt.plot(bb['Weighted_Price'])
-plt.figure(figsize=(12,10))
-plt.plot(bb['Open'],label = 'open')
-plt.plot(bb['Close'],label = 'close')
-plt.legend()
-plt.show()
-
-X = bb.iloc[:,-3:-1]
-y = bb.iloc[:,-1:]
-
-from sklearn.model_selection import train_test_split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 0)
-
-
-# Feature Scaling
-from sklearn.preprocessing import StandardScaler
-sc_X = StandardScaler()
-X_train = sc_X.fit_transform(X_train)
-X_test = sc_X.transform(X_test)
-sc_y = StandardScaler()
-y_train = sc_y.fit_transform(y_train)
-
-from sklearn.linear_model import LinearRegression
-#regressor = LinearRegression()
-#regressor.fit(X_train, y_train)
-
-reg = LinearRegression().fit(X_train, y_train)
-reg.coef_
-reg.intercept_
-y_pred = reg.predict(X_test)
-reg.score(y_test['Weighted_Price'],y_pred)
-plt.plot(y_pred,label = 'pred')
-plt.plot(y_test['Weighted_Price'],label = 'actual')
-plt.legend()
-plt.show()
-
-bb['fluc'] = bb['High']-bb['Low']
-
-x = bb.drop(['Open','High','Low','Close','Weighted_Price'],axis = 1)
-model = sm.OLS(bb['Weighted_Price'],x).fit()
-print(model.summary())
-
-#%% Draw k line graph
-
 
 #%%
 #Data cleaning
@@ -96,17 +42,17 @@ b['year'] = pd.DatetimeIndex(b['date']).year
 b['month'] = pd.DatetimeIndex(b['date']).month
 b.columns
 b.head()
-#%%
-#https://datahub.io/cryptocurrency/bitcoin#python
+
 #%%
 #_________________________________Market cap VS daily transaction vol___________________________
 abnormal = b[b['marketcap(USD)']<b['txVolume(USD)']]
 
 fig, ax = plt.subplots(figsize=(12,10))
 plt.grid()
+#plot the daily transaction volumn and total marketcap
 plt.plot(b['txVolume(USD)'], label='Daily transaction vol')
 plt.plot(b['marketcap(USD)'], label='Total marketCap')
-
+#Change the xticks label
 locs,labels = plt.xticks()
 l = []
 for i in locs:
@@ -120,22 +66,12 @@ ax.set_xticklabels(l)
 
 for i in abnormal.index:
     plt.plot(i,abnormal['txVolume(USD)'][i],'o',ms = 7)
-
 plt.xlabel('date')
 plt.ylabel('hundred billion(USD)  1e^11')
 plt.legend()
 filepath = os.path.join( dirpath,'MarketCap_DailyVol.png')
 plt.savefig(filepath)
 plt.show()
-
-
-#plt.plot(b['txVolume(USD)']/b['marketcap(USD)'],label = 'percent')
-#%%
-#_??????????????????????????????????????????????
-fig, ax = plt.subplots(figsize=(12,10))
-plt.plot(b['price(USD)']*b['generatedCoins'])
-plt.plot(b['marketcap(USD)'], label='Total marketCap')
-plt.show
 
 
 #%%
@@ -258,10 +194,13 @@ ax.set_xticklabels(l)
 plt.xlabel('date')
 plt.ylabel('price')
 filepath = os.path.join( dirpath ,'2016.png')
+#plot the brexit dot
 UK_index = Y16[Y16['date'] == '2016-06-23'].index[0]
-Loss = Y16[Y16['date'] == '2016-08-01'].index[0]
 plt.plot(UK_index,Y16['price(USD)'][UK_index],'^',ms = 15, label = 'Breit')
+#plot the BTC coin dot
+Loss = Y16[Y16['date'] == '2016-08-01'].index[0]
 plt.plot(Loss,Y16['price(USD)'][Loss],'v',ms = 15, label = 'The Bitfinex Bitcoin Hack')
+#plot the US president election dot
 USP = Y16[Y16['date'] == '2016-11-08'].index[0]
 plt.plot(USP,Y16['price(USD)'][USP],'o',ms = 15, label = 'U.S. presidential election')
 
@@ -275,10 +214,9 @@ plt.show()
 plt.figure(figsize=(12,10))
 plt.grid()
 ax = plt.subplot(111)
-
+#make boxplots by months
 for month in b.month.unique():
-    ax.boxplot(b[b['month'] == month]['price(USD)'],positions = [month])
-    
+    ax.boxplot(b[b['month'] == month]['price(USD)'],positions = [month]) 
 ax.xaxis.set_minor_locator(AutoMinorLocator())
 ax.set_xlim(0,13)
 ax.text(1,-1,1)
@@ -289,7 +227,7 @@ plt.savefig(filepath)
 plt.show()
 
 #%%________________________________Category in SEASON_________________________________???
-
+#split the dataset by season
 Spring = b[b['month'].isin([3,4,5])]
 Summer = b[b['month'].isin([6,7,8])]
 Fall = b[b['month'].isin([9,10,11])]
@@ -358,7 +296,7 @@ plt.show()
 
 #%%
 #____________________________21 milllion coins____________________________
-
+#create a method to caculate number of coins generated in total by cycle and reward
 def generator(cycle,reward):
     c = 210000
     if cycle is not 1:
@@ -367,6 +305,7 @@ def generator(cycle,reward):
         return c*reward
 generator(40,50)
 
+#set the x label
 x = np.arange(1,33,1).tolist()
 l = []
 for i in x:
@@ -383,9 +322,7 @@ plt.legend(loc='center')
 filepath = os.path.join( dirpath ,'21m.png')
 plt.savefig(filepath)
 plt.show()
-#%%
-#Relationships based on year and month
-b[['year','price(USD)','month']].pivot(index = 'year',columns = 'pc')
+
 # %%
 #Get X and y variable. Y is one day late
 XX = b[b.columns.difference(['date', 'marketcap(USD)','price(USD)','txVolume(USD)','adjustedTxVolume(USD)','exchangeVolume(USD)','medianTxValue(USD)'])].iloc[1:,:]
@@ -412,8 +349,6 @@ y_test = sc_y.fit_transform(y_test)
 #%%
 # Fitting Multiple Linear Regression to the Training set
 from sklearn.linear_model import LinearRegression
-#regressor = LinearRegression()
-#regressor.fit(X_train, y_train)
 
 reg = LinearRegression().fit(X_train, y_train)
 y_pred = reg.predict(X_test)
@@ -421,8 +356,9 @@ plt.plot(y_pred,label = 'pred')
 plt.plot(y_test,label = 'actual')
 plt.legend()
 plt.show()
+y_pred = reg.predict(X_test)
+R2 = 1 - (np.sum((y_test-y_pred)**2)/np.sum((y_test-np.mean(y_test))**2))
 
-reg.score(reg.predict(X_test),y_test)
 # %%
 from sklearn.ensemble import RandomForestRegressor
 RFreg = RandomForestRegressor(n_estimators = 100, random_state = 0)
@@ -432,10 +368,9 @@ plt.plot(y_test,label = 'actual')
 plt.legend()
 plt.show()
 
-#print(RFreg.score(RFreg.predict(X_test),y_test))
-print(RFreg)
+#y_predRF = RFreg.predict(X_test)
+#R2_RF = 1 - (np.sum((y_test-y_predRF)**2)/np.sum((y_test-np.mean(y_test))**2))
 
-ols(X,y).fit().summary()
 
 # %%
 from sklearn.linear_model import LogisticRegression
